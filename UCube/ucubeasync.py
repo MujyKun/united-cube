@@ -22,12 +22,18 @@ class UCubeClientAsync(UCubeClient):
     loop:
         Asyncio Event Loop
 
-    More Attributes can be found in :ref:`UCubeClient`.
     """
 
     def __init__(self, loop=get_event_loop(), **kwargs):
         self.loop = loop
         super().__init__(**kwargs)
+
+    def __del__(self):
+        """Terminate the web session if it was created by this object."""
+        if self._own_session and not self.web_session.closed:
+            loop = asyncio.get_event_loop()
+            if loop:
+                loop.create_task(self.web_session.close())
 
     async def start(self):
         """Creates internal cache.
@@ -57,9 +63,10 @@ class UCubeClientAsync(UCubeClient):
             if not await self.check_token_works():
                 raise InvalidToken
 
+            await self.fetch_board_posts("o0QeX9BhRbSmbNw9j1CNNQ")
+
             self.cache_loaded = True
 
-            await self.web_session.close()
         except Exception as err:
             if self._own_session:
                 await self.web_session.close()
@@ -96,6 +103,41 @@ class UCubeClientAsync(UCubeClient):
                     self._set_token(token)
                 return
         self._set_exception(LoginFailed())
+
+    async def fetch_board_posts(self, board_slug: str):
+        """
+        Retrieve a list of Posts from a board.
+
+        Parameters
+        ----------
+        board_slug: str
+            The slug (Unique Identifier) of a board.
+
+        Returns
+        -------
+
+        """
+        replace_kwargs = {
+            "{board_slug}": board_slug,
+            "{feed_amount}": "99999",
+            "{page_number}": "1"
+        }
+        url = self.replace(self._posts_url, **replace_kwargs)
+        async with self.web_session.get(url=url, headers=self._headers) as resp:
+            if self._check_status(resp.status, url):
+                data = await resp.json()
+
+    async def fetch_all_clubs(self):
+        replace_kwargs = {
+            "{feed_amount}": "99999",
+            "{page_number}": "1"
+        }
+        url = self.replace(self._all_clubs_url, **replace_kwargs)
+        async with self.web_session.get(url=url, headers=self._headers) as resp:
+            if self._check_status(resp.status, url):
+                data = await resp.json()
+                for raw_club in data.get("items"):
+                    ...
 
     async def check_token_works(self) -> bool:
         """

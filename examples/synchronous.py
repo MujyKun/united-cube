@@ -65,9 +65,9 @@ class Example:
 
 
 if __name__ == '__main__':
-    print("================")
-    print("Starting Example")
-    print("================")
+    print("================================")
+    print("||Starting Synchronous Example||")
+    print("================================")
 
     load_dotenv()  # load the .env vars -- Important.
     example_object = Example()

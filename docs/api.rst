@@ -30,6 +30,23 @@ UCubeClientAsync
 Models
 ======
 
+=========
+BaseModel
+=========
+.. autoclass:: UCube.models.BaseModel
+    :members:
+
+====
+Club
+====
+.. autoclass:: UCube.models.Club
+    :members:
+
+=====
+Image
+=====
+.. autoclass:: UCube.models.Image
+    :members:
 
 .. _obj_creation:
 
@@ -61,6 +78,12 @@ InvalidCredentials
 Something Went Wrong
 ====================
 .. autoexception:: UCube.SomethingWentWrong
+    :members:
+
+===========
+LoginFailed
+===========
+.. autoexception:: UCube.LoginFailed
     :members:
 
 ==============

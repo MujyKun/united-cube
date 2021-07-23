@@ -2,15 +2,14 @@ import asyncio
 import traceback
 
 from . import InvalidToken, LoginFailed
+from . import BASE_SITE
 
 
 class UCubeClient:
     """
     Abstract & Parent Client for connecting to UCube and creating the internal cache.
 
-    Do not create an object directly from this class.
-    Instead, create a :class:`UCube.UCubeClientSync` or :class:`UCube.UCubeClientAsync`
-    object since those are concrete.
+    .. warning:: Do not create an object directly from this class. Instead, create a :class:`UCube.UCubeClientSync` or :class:`UCube.UCubeClientAsync` object since those are concrete.
 
     Parameters
     ----------
@@ -52,18 +51,20 @@ class UCubeClient:
         self._old_notifications = []
         self._headers: dict = self.__get_headers()
 
-        self._base_site = "https://united-cube.com/"
+        self._base_site = BASE_SITE
         self._api_url = self._base_site + "v1/"
 
         # query string params that we will just append to the URL.
         self._club_slug = "?club={club_slug}"
         self._board_slug = "?board={board_slug}"
-        self._per_page_and_number = "&per_page={feed_amount}&page={page_number}"
+        self._per_page_and_number = "per_page={feed_amount}&page={page_number}"
 
         # slug is the unique identifier that UCube uses for a certain object.
+        self._all_clubs_url = self._api_url + "clubs?" + self._per_page_and_number
+        self._posts_url = self._api_url + "posts" + "?board={board_slug}&" + self._per_page_and_number
         self._boards_url = self._api_url + "boards" + self._club_slug
-        self._feeds_url = self._api_url + "feeds" + self._board_slug + self._per_page_and_number
-        self._notifications_url = self._api_url + "notifications" + self._club_slug + self._per_page_and_number
+        self._feeds_url = self._api_url + "feeds" + self._board_slug + f"&{self._per_page_and_number}"
+        self._notifications_url = self._api_url + "notifications" + self._club_slug + f"&{self._per_page_and_number}"
 
         self._club_info_url = self._api_url + "clubs/{club_slug}"
         # to this point, categories has not actually returned any items and is useless.

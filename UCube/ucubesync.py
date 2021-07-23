@@ -10,13 +10,19 @@ class UCubeClientSync(UCubeClient):
     Parameters
     ----------
     kwargs:
-        Same as :ref:`UCubeClient`.
+        Args for :ref:`UCubeClient`.
 
-
-    Attributes are the same as :ref:`UCubeClient`.
     """
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+    def __del__(self):
+        """Terminate the web session if it was created by this object."""
+        try:
+            if self._own_session:
+                self.web_session.close()
+        except Exception:
+            ...
 
     def start(self):
         """Creates internal cache.
