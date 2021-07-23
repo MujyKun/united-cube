@@ -43,9 +43,27 @@ Club
     :members:
 
 =====
+Board
+=====
+.. autoclass:: UCube.models.Board
+    :members:
+
+====
+Post
+====
+.. autoclass:: UCube.models.Post
+    :members:
+
+=====
 Image
 =====
 .. autoclass:: UCube.models.Image
+    :members:
+
+=====
+Video
+=====
+.. autoclass:: UCube.models.Video
     :members:
 
 .. _obj_creation:
