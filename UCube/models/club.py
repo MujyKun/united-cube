@@ -75,7 +75,7 @@ class Club(BaseModel):
 
     """
     def __init__(self, artist_name: str, create_image, **options):
-        super().__init__(**options)
+        super().__init__(options.get("slug"), artist_name)
         self.artist_name: str = artist_name
         self.color_one: Optional[str] = options.pop("color_1", None)
         self.color_two: Optional[str] = options.pop("color_2", None)

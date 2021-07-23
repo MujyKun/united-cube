@@ -3,7 +3,8 @@ from typing import List
 
 import aiohttp
 from asyncio import get_event_loop
-from . import UCubeClient, InvalidToken, InvalidCredentials, LoginFailed, create_club, models
+from . import UCubeClient, InvalidToken, InvalidCredentials, LoginFailed, create_club, \
+    models, create_post, create_board
 
 
 class UCubeClientAsync(UCubeClient):
@@ -64,8 +65,11 @@ class UCubeClientAsync(UCubeClient):
             if not await self.check_token_works():
                 raise InvalidToken
 
-            # await self.fetch_board_posts("o0QeX9BhRbSmbNw9j1CNNQ")
-
+            test_board_id = "o0QeX9BhRbSmbNw9j1CNNQ"
+            test_club_id = "FgSB4A8FTymgi_tLbOOAkw"
+            # posts = await self.fetch_board_posts(test_board_id)
+            # clubs = await self.fetch_all_clubs()
+            boards = await self.fetch_club_boards(test_club_id)
             self.cache_loaded = True
 
         except Exception as err:
@@ -105,7 +109,32 @@ class UCubeClientAsync(UCubeClient):
                 return
         self._set_exception(LoginFailed())
 
-    async def fetch_board_posts(self, board_slug: str):
+    async def fetch_club_boards(self, club_slug: str) -> List[models.Board]:
+        """
+        Retrieve a list of Boards from a Club.
+
+        Parameters
+        ----------
+        club_slug: str
+            The slug (Unique Identifier) of a Club.
+
+        Returns
+        -------
+        A list of Boards: List[:class:`models.Board`]
+        """
+        boards = []
+        replace_kwargs = {
+            "{club_slug}": club_slug
+        }
+        url = self.replace(self._boards_url, **replace_kwargs)
+        async with self.web_session.get(url=url, headers=self._headers) as resp:
+            if self._check_status(resp.status, url):
+                data = await resp.json()
+                for raw_board in data.get("items"):
+                    boards.append(create_board(raw_board))
+        return boards
+
+    async def fetch_board_posts(self, board_slug: str) -> List[models.Post]:
         """
         Retrieve a list of Posts from a board.
 
@@ -116,8 +145,9 @@ class UCubeClientAsync(UCubeClient):
 
         Returns
         -------
-
+        A list of Posts: List[:class:`models.Post`]
         """
+        posts = []
         replace_kwargs = {
             "{board_slug}": board_slug,
             "{feed_amount}": "99999",
@@ -127,6 +157,9 @@ class UCubeClientAsync(UCubeClient):
         async with self.web_session.get(url=url, headers=self._headers) as resp:
             if self._check_status(resp.status, url):
                 data = await resp.json()
+                for raw_post in data.get("items"):
+                    posts.append(create_post(raw_post))
+        return posts
 
     async def fetch_all_clubs(self) -> List[models.Club]:
         """

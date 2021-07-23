@@ -68,7 +68,7 @@ class Image(BaseModel):
         if not options.get("slug"):
             # The slug will become the path if it does not exist.
             options["slug"] = path
-        super().__init__(**options)
+        super().__init__(options.get("slug"))
 
         self.path: str = path
         self.size: int = options.pop("size", 0)

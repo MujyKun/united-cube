@@ -3,7 +3,7 @@ from . import models
 from .error import InvalidToken, PageNotFound, BeingRateLimited, \
     SomethingWentWrong, InvalidCredentials, LoginFailed
 
-from .objects import create_club, create_image, BASE_SITE
+from .objects import create_club, create_image, BASE_SITE, create_post, create_video, create_board
 from .ucubeclient import UCubeClient
 from .ucubesync import UCubeClientSync
 from .ucubeasync import UCubeClientAsync
