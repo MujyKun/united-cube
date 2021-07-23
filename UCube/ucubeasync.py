@@ -1,8 +1,9 @@
 import asyncio
+from typing import List
 
 import aiohttp
 from asyncio import get_event_loop
-from . import UCubeClient, InvalidToken, InvalidCredentials, LoginFailed
+from . import UCubeClient, InvalidToken, InvalidCredentials, LoginFailed, create_club, models
 
 
 class UCubeClientAsync(UCubeClient):
@@ -127,7 +128,16 @@ class UCubeClientAsync(UCubeClient):
             if self._check_status(resp.status, url):
                 data = await resp.json()
 
-    async def fetch_all_clubs(self):
+    async def fetch_all_clubs(self) -> List[models.Club]:
+        """
+        Fetch all Clubs from the UCube API.
+
+        Returns
+        -------
+        A list of Clubs: List[:class:`models.Club`]
+        """
+        clubs = []
+
         replace_kwargs = {
             "{feed_amount}": "99999",
             "{page_number}": "1"
@@ -137,7 +147,8 @@ class UCubeClientAsync(UCubeClient):
             if self._check_status(resp.status, url):
                 data = await resp.json()
                 for raw_club in data.get("items"):
-                    ...
+                    clubs.append(create_club(raw_club))
+        return clubs
 
     async def check_token_works(self) -> bool:
         """

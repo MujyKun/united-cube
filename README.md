@@ -36,7 +36,7 @@ The second way is getting your account token manually and will require manual up
 
 In order to get your account token, go to [United-Cube](https://www.united-cube.com/) and Inspect Element (F12).  
 Then go to the `Network` tab and filter by `XHR`. Then refresh your page (F5) and look for `popup` or `clubs` under `XHR`.  
-Under Headers, scroll to the bottom and view the request headers. You want to copy everything past `authorization: Bearer`.
+Under Headers, scroll to the bottom and view the request headers. You want to copy everything past `Authorization: Bearer`.
 
 For example, you may see (This is just an example):  
 ``Authorization: Bearer ABCDEFGHIJKLMNOPQRSTUVWXYZ``  

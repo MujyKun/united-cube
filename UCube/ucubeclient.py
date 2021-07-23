@@ -1,6 +1,4 @@
 import asyncio
-import traceback
-
 from . import InvalidToken, LoginFailed
 from . import BASE_SITE
 
