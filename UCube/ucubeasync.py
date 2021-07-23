@@ -63,7 +63,7 @@ class UCubeClientAsync(UCubeClient):
             if not await self.check_token_works():
                 raise InvalidToken
 
-            await self.fetch_board_posts("o0QeX9BhRbSmbNw9j1CNNQ")
+            # await self.fetch_board_posts("o0QeX9BhRbSmbNw9j1CNNQ")
 
             self.cache_loaded = True
 
