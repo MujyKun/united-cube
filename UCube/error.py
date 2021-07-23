@@ -16,6 +16,12 @@ class SomethingWentWrong(Exception):
         super(SomethingWentWrong, self).__init__(msg)
 
 
+class LoginFailed(Exception):
+    """An Exception raised when the login failed."""
+    def __init__(self, msg: str = "The login process for UCube had failed."):
+        super(LoginFailed, self).__init__(msg)
+
+
 class PageNotFound(Exception):
     r"""
     An Exception Raised When a link was not found.

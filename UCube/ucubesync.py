@@ -1,6 +1,6 @@
 import json
 import requests
-from . import UCubeClient, InvalidToken, InvalidCredentials, SomethingWentWrong
+from . import UCubeClient, InvalidToken, InvalidCredentials, LoginFailed
 
 
 class UCubeClientSync(UCubeClient):
@@ -26,14 +26,16 @@ class UCubeClientSync(UCubeClient):
         :raises: :class:`UCube.error.InvalidToken` If the token was invalid.
         :raises: :class:`UCube.error.InvalidCredentials` If the user credentials were invalid or not provided.
         :raises: :class:`UCube.error.BeingRateLimited` If the client is being rate-limited.
-        :raises: :class:`UCube.error.SomethingWentWrong` If Something went wrong. Error explains more.
+        :raises: :class:`UCube.error.LoginFailed` Login process had failed.
+        :raises: :class:`asyncio.exceptions.TimeoutError` Waited too long for a login.
         """
         try:
             if not self.web_session:
                 self.web_session = requests.Session()
+                self._own_session = True  # we own the session and need to close it.
 
             if not self._login_info_exists and not self._token_exists:
-                raise InvalidCredentials
+                raise InvalidCredentials("The credentials for a token or a username/password could not be found.")
 
             if self._login_info_exists:
                 self.__try_login()
@@ -43,13 +45,16 @@ class UCubeClientSync(UCubeClient):
 
             self.cache_loaded = True
         except Exception as err:
+            if self._own_session:
+                self.web_session.close()
+
             raise err
 
     def __try_login(self):
         """
         Will attempt to login to UCube and set refresh token and token.
 
-        :raises: :class:`UCube.error.InvalidCredentials` If the credentials failed.
+        :raises: :class:`UCube.error.LoginFailed` If the login failed.
         """
         self._login(self.__process_login)
 
@@ -62,7 +67,8 @@ class UCubeClientSync(UCubeClient):
         login_payload: dict
             The client's login payload
         """
-        with self.web_session.post(url=self._auth_login_url, data=login_payload) as resp:
+        with self.web_session.post(url=self._auth_login_url, json=login_payload) as resp:
+
             if self._check_status(resp.status_code, self._auth_login_url):
                 data = json.loads(resp.text)
                 refresh_token = data.get("refresh_token")
@@ -72,7 +78,8 @@ class UCubeClientSync(UCubeClient):
                 if token:
                     self._set_token(token)
                 return
-        raise SomethingWentWrong("Login Failed.")
+
+        raise LoginFailed()
 
     def check_token_works(self):
         """

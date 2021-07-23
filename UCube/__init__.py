@@ -1,6 +1,6 @@
 from . import models
 
-from .error import InvalidToken, PageNotFound, BeingRateLimited, SomethingWentWrong, InvalidCredentials
+from .error import InvalidToken, PageNotFound, BeingRateLimited, SomethingWentWrong, InvalidCredentials, LoginFailed
 
 from .ucubeclient import UCubeClient
 from .ucubesync import UCubeClientSync

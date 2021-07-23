@@ -1,4 +1,7 @@
-from . import InvalidToken, SomethingWentWrong
+import asyncio
+import traceback
+
+from . import InvalidToken, LoginFailed
 
 
 class UCubeClient:
@@ -42,6 +45,8 @@ class UCubeClient:
         # we will allow invalid login information until the user uses the start method.
         self.__token = token
 
+        self.__exception_to_raise = None
+
         self.user_notifications = []
 
         self._old_notifications = []
@@ -64,12 +69,12 @@ class UCubeClient:
         # to this point, categories has not actually returned any items and is useless.
         self._categories_url = self._api_url + "boards/{club_slug}/categories"
 
-        self._auth_login_url = self._api_url + "/auth/login"
+        self._auth_login_url = self._api_url + "auth/login"
         self._sign_in_path_url = self._base_site + "signin"
 
         self._about_me_url = self._api_url + "me"
 
-        self.__login_payload = {
+        self._login_payload = {
             "id": username,
             "path": self._sign_in_path_url,
             "pw": password,
@@ -82,18 +87,46 @@ class UCubeClient:
 
         self.cache_loaded = False
 
+        # Whether a UCube Client owns the web session or if it belongs to another application.
+        self._own_session = False
+
         self.all_clubs = {}
         self.all_boards = {}
 
     @property
     def _login_info_exists(self) -> bool:
         """Whether login info is present."""
-        return self.__login_payload["id"] and self.__login_payload["pw"]
+        return self._login_payload["id"] and self._login_payload["pw"]
 
     @property
     def _token_exists(self) -> bool:
         """Whether a token is present."""
         return bool(self.__token)
+
+    async def _wait_for_login(self, timeout=15):
+        """
+        Will wait until the client is logged in or the timeout timer is exceed.
+
+        Parameters
+        ----------
+        timeout: int
+            Amount of seconds before an exception is raised.
+
+        :raises:
+        """
+        seconds_passed = 0
+        while not self._login_payload["refresh_token"]:
+            if self.__exception_to_raise:
+                if isinstance(self.__exception_to_raise, (LoginFailed, asyncio.exceptions.TimeoutError)):
+                    exception = self.__exception_to_raise
+                    self.__exception_to_raise = None
+                    # if an exception was raised from here, the actual exception occurred in a task.
+                    raise exception
+            await asyncio.sleep(1)
+            seconds_passed += 1
+
+            if seconds_passed > timeout:
+                self._set_exception(asyncio.exceptions.TimeoutError())
 
     @staticmethod
     def replace(url, **kwargs) -> str:
@@ -115,7 +148,7 @@ class UCubeClient:
             url = url.replace(key, item)
         return url
 
-    def _login(self, method, async_method=False, loop=None):
+    def _login(self, method):
         """
         Requests a login.
 
@@ -125,19 +158,12 @@ class UCubeClient:
         Parameters
         ----------
         method:
-            The method to call. Should be able to take in the login payload.
-        async_method: bool
-            Whether or not the method to call is asynchronous
-        loop:
-            Asyncio Event Loop. This should be passed in if async_method is set to True.
-
+            The async/sync method to call. Should be able to take in the login payload.
         """
-        if not async_method:
-            method(self.__login_payload)
+        if not asyncio.iscoroutinefunction(method):
+            method(self._login_payload)
         else:
-            if not loop:
-                raise SomethingWentWrong("No Loop was passed in for log in. Will not attempt to search for loop.")
-            loop.create_task(method(self.__login_payload))
+            asyncio.create_task(method(self._login_payload))
 
     def _set_refresh_token(self, refresh_token: str):
         """
@@ -148,7 +174,7 @@ class UCubeClient:
         refresh_token: str
             The refresh token to pass when logging in.
         """
-        self.__login_payload["refresh_token"] = refresh_token
+        self._login_payload["refresh_token"] = refresh_token
 
     def _set_token(self, token):
         """
@@ -171,6 +197,16 @@ class UCubeClient:
         my_info: The data from the about me url.
         """
         self.__my_info = my_info
+
+    def _set_exception(self, exception: Exception):
+        """
+        Set an exception from a task that occurred.
+
+        Parameters
+        ----------
+        exception: The Exception that was raised.
+        """
+        self.__exception_to_raise = exception
 
     def _check_status(self, status, url) -> bool:
         """
