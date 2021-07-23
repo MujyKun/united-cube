@@ -3,3 +3,5 @@ _*/
 dist/
 *.egg-info/
 photos/
+build/
+venv/
