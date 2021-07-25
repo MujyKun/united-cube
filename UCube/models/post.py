@@ -1,9 +1,10 @@
 from . import BaseModel
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Optional
 
 if TYPE_CHECKING:
     from .image import Image
     from .video import Video
+    from .user import User
 
 
 class Post(BaseModel):
@@ -12,7 +13,8 @@ class Post(BaseModel):
 
     Inherits from :class:`BaseModel`
 
-    .. warning:: It is not suggested to create a Post manually, but rather through the following method: :class:`UCube.objects.create_post`
+    .. warning::
+        It is not suggested to create a Post manually, but rather through the following method: :class:`UCube.objects.create_post`
 
     ``The information retrieved on a Post is directly from the UCube API and altered to fit this class.``
 
@@ -33,11 +35,13 @@ class Post(BaseModel):
     Parameters
     ----------
     slug: :class:`str`
-        The unique identifier of the image. This can be the full link to the image.
+        The unique identifier of the Post.
     create_image: :class:`UCube.create_image`
-        The method to call for creating an image.
+        The method to call for creating an image. You can also use a custom method.
     create_video: :class:`UCube.create_video`
-        The method to call for creating a video.
+        The method to call for creating a video. You can also use a custom method.
+    create_user: :class:`UCube.create_user`
+        The method to call for creating a user. You can also use a custom method.
     content: :class:`str`
         The body content of the post with HTML.
     board_slug: :class:`str`
@@ -50,19 +54,21 @@ class Post(BaseModel):
     Attributes
     ----------
     slug: :class:`str`
-        The unique identifier of the image. This can be the full link to the image.
+        The unique identifier of the Post.
     content: :class:`str`
         The post content (without HTML).
-    path: :class:`str`
-        The path to the direct link of the image.
-    size: :class:`int`
-        The size of the Image.
-    width: :class:`int`
-        The width of the Image. This may be set to 0 at times.
-    height: :class:`int`
-        The height of the Image. This may be set to 0 at times.
+    videos: List[:class:`Video`]
+        A list of videos that belong to the post.
+    images: List[:class:`models.Image`]
+        A list of images that belong to the Post.
+    comment_count: :class:`int`
+        The amount of comments.
+    posted_at: :class:`str`
+        When the post was created.
+    user: Optional[:class:`models.User`]
+        The user that created the Post.
     """
-    def __init__(self, create_image, create_video, **options):
+    def __init__(self, create_image, create_video, create_user, **options):
         super().__init__(options.get("slug"), options.get("name"))
         self.content: str = self.remove_html(options.pop("content", ""))
 
@@ -77,6 +83,11 @@ class Post(BaseModel):
                 self.images.append(create_image(media_obj["data"]))
             elif media_obj["type_code"] == "602":  # videos
                 self.videos.append(create_video(media_obj["data"]))
+
+        self.comment_count: int = options.pop("comment_count", None)
+        self.posted_at = options.pop("register_datetime", None)
+        user = options.pop("registrant", None)
+        self.user: Optional[User] = None if not user else create_user(user)
 
     def __str__(self):
         return self.content

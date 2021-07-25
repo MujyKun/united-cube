@@ -1,4 +1,7 @@
 import asyncio
+from typing import Optional
+
+from aiohttp import ClientSession
 from UCube import UCubeClientAsync
 from dotenv import load_dotenv
 from os import getenv
@@ -44,20 +47,23 @@ def get_formatted_time(seconds):
 
 class Example:
     def __init__(self):
-        kwargs = {
+        self.kwargs = {
             # Only pass in the authorization method you plan to use
             # you can choose between passing in a username and password or by putting a token.
             # If you put both, it will prioritize username & password login and create tokens from that.
             'username': getenv("UCUBE_USERNAME"),
             'password': getenv("UCUBE_PASSWORD"),
             'token': getenv("UCUBE_AUTH"),
-            'verbose': False,
+            'verbose': True,
             'web_session': None
         }
 
-        self.ucube_client = UCubeClientAsync(**kwargs)
+        self.ucube_client: Optional[UCubeClientAsync] = None
 
     async def start(self):
+        if not self.ucube_client:
+            self.kwargs["web_session"] = ClientSession()
+            self.ucube_client = UCubeClientAsync(**self.kwargs)
         await self.ucube_client.start()
 
 

@@ -7,7 +7,8 @@ class Image(BaseModel):
 
     Inherits from :class:`BaseModel`
 
-    .. warning:: It is not suggested to create an Image manually, but rather through the following method: :class:`UCube.objects.create_image`
+    .. warning:: It is not suggested to create an Image manually, but rather through the following method:
+        :class:`UCube.objects.create_image`
 
     ``The information retrieved on an Image is directly from the UCube API and altered to fit this class.``
 
@@ -36,7 +37,8 @@ class Image(BaseModel):
     path: :class:`str`
         The path to the direct link of the image.
     base_url: :class:`str`
-        The Base URL of the image site. This is especially useful if there are several base urls for an image if UCube is using an external image host.
+        The Base URL of the image site.
+        This is especially useful if there are several base urls for an image if UCube is using an external image host.
 
     Other Parameters
     ----------------

@@ -23,7 +23,7 @@ class BaseModel:
     Parameters
     ----------
     slug: :class:`str`
-        The unique identifier.
+        The unique identifier of the model.
 
     Other Parameters
     ----------------
@@ -64,6 +64,9 @@ class BaseModel:
         -------
         A cleansed string with no HTML.: :class:`str`
         """
+        if not content:
+            return ""
+
         content = content.replace("<br>", "\n")  # replace new line tags before they get replaced.
         html_cleaner = re.compile('<.*?>|&([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});')
         clean_text = re.sub(html_cleaner, '', content)

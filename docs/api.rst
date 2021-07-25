@@ -54,6 +54,18 @@ Post
 .. autoclass:: UCube.models.Post
     :members:
 
+====
+User
+====
+.. autoclass:: UCube.models.User
+    :members:
+
+============
+Notification
+============
+.. autoclass:: UCube.models.Notification
+    :members:
+
 =====
 Image
 =====

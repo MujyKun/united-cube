@@ -1,6 +1,10 @@
-from typing import Optional
+from typing import Dict, TYPE_CHECKING
+
 
 from . import BaseModel
+
+if TYPE_CHECKING:
+    from .post import Post
 
 
 class Board(BaseModel):
@@ -9,7 +13,8 @@ class Board(BaseModel):
 
     Inherits from :class:`BaseModel`
 
-    .. warning:: It is not suggested to create a Board manually, but rather through the following method: :class:`UCube.objects.create_board`
+    .. warning::
+        It is not suggested to create a Board manually, but rather through the following method: :class:`UCube.objects.create_board`
 
     ``The information retrieved on a Board is directly from the UCube API and altered to fit this class.``
 
@@ -29,6 +34,8 @@ class Board(BaseModel):
 
     Parameters
     ----------
+    slug: :class:`str`
+        The unique identifier of the Board.
     active_flag: :class:`bool`
         Whether the board is active.
     club_slug: :class:`str`
@@ -40,9 +47,11 @@ class Board(BaseModel):
         Whether the board is active.
     club_slug: :class:`str`
         The club slug that the board belongs to.
+    posts: Dict[:class:`str`, :class:`models.Post`]
 
     """
     def __init__(self, **options):
         super().__init__(options.get("slug"), options.get("name"))
         self.active_flag: bool = options.get("active_flag")
         self.club_slug: str = options.get("club_slug")
+        self.posts: Dict[str, Post] = {}

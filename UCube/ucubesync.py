@@ -95,5 +95,6 @@ class UCubeClientSync(UCubeClient):
         """
         with self.web_session.get(url=self._about_me_url, headers=self._headers) as resp:
             if resp.status_code == 200:
-                self._set_my_info(json.loads(resp.text))
+                if not self._my_info_exists:
+                    self._set_my_info(json.loads(resp.text))
                 return True

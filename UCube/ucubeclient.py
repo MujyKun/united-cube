@@ -2,6 +2,11 @@ import asyncio
 from . import InvalidToken, LoginFailed
 from . import BASE_SITE
 
+from typing import Dict, TYPE_CHECKING, List
+
+if TYPE_CHECKING:
+    from models import Post, Club, Board, User, Notification
+
 
 class UCubeClient:
     """
@@ -22,6 +27,9 @@ class UCubeClient:
     token:
         The account token to connect to the UCube API.
         In order to find your token, please refer to :ref:`account_token`
+    hook:
+        A passed in method that will be called every time there is a new notification.
+        This method must take in a :class:`models.Notification` object.
 
     Attributes
     -----------
@@ -34,8 +42,21 @@ class UCubeClient:
     cache_loaded: bool
         Whether the Internal UCache Cache is fully loaded.
         This will change for a split moment when grabbing a new post.
+    clubs_followed: List[:class:`models.Club`]
+        A list of the clubs that the client is following.
+    clubs: Dict[:class:`str`, :class:`models.Club`]
+        A dict of all Clubs in cache with the slug as the key.
+    boards: Dict[:class:`str`, :class:`models.Board`]
+        A dict of all Boards in cache with the slug as the key.
+    posts: Dict[:class:`str`, :class:`models.Post`]
+        A dict of all Posts in cache with the slug as the key.
+    users: Dict[:class:`str`, :class:`models.User`]
+        A dict of all Users in cache with the slug as the key.
+    notifications: Dict[:class:`str`, :class:`models.Notification`]
+        A dict of all Notifications in cache with the slug as the key.
    """
-    def __init__(self, username: str = None, password: str = None, token=None, web_session=None, verbose: bool = False):
+    def __init__(self, username: str = None, password: str = None, token=None, web_session=None, verbose: bool = False,
+                 hook=None):
         self.verbose = verbose
         self.web_session = web_session
 
@@ -65,15 +86,17 @@ class UCubeClient:
         self._notifications_url = self._api_url + "notifications" + self._club_slug + f"&{self._per_page_and_number}"
 
         self._club_info_url = self._api_url + "clubs/{club_slug}"
+        self._follow_club_url = self._club_info_url + "/join"
         # to this point, categories has not actually returned any items and is useless.
         self._categories_url = self._api_url + "boards/{club_slug}/categories"
 
+        self._refresh_auth_url = self._api_url + "auth/refresh"
         self._auth_login_url = self._api_url + "auth/login"
         self._sign_in_path_url = self._base_site + "signin"
 
         self._about_me_url = self._api_url + "me"
 
-        self._login_payload = {
+        self.__login_payload = {
             "id": username,
             "path": self._sign_in_path_url,
             "pw": password,
@@ -89,18 +112,51 @@ class UCubeClient:
         # Whether a UCube Client owns the web session or if it belongs to another application.
         self._own_session = False
 
-        self.all_clubs = {}
-        self.all_boards = {}
+        self._method_to_call = hook
+
+        self.expired_token = False
+
+        self.clubs_followed: List[Club] = []
+        self.clubs: Dict[str, Club] = {}
+        self.boards: Dict[str, Board] = {}
+        self.posts: Dict[str, Post] = {}
+        self.users: Dict[str, User] = {}
+        self.notifications: Dict[str, Notification] = {}
+
+    @property
+    def _my_info_exists(self) -> bool:
+        return bool(self.__my_info)
 
     @property
     def _login_info_exists(self) -> bool:
         """Whether login info is present."""
-        return self._login_payload["id"] and self._login_payload["pw"]
+        return self.__login_payload["id"] and self.__login_payload["pw"]
 
     @property
     def _token_exists(self) -> bool:
         """Whether a token is present."""
         return bool(self.__token)
+
+    @property
+    def _refresh_token_exists(self) -> bool:
+        """Whether a refresh token is present."""
+        return bool(self.__login_payload["refresh_token"])
+
+    def _get_refresh_token(self):
+        """Get the refresh token."""
+        return self.__login_payload["refresh_token"]
+
+    def get_club(self):
+        ...
+
+    def get_board(self):
+        ...
+
+    def get_post(self):
+        ...
+
+    def get_user(self):
+        ...
 
     async def _wait_for_login(self, timeout=15):
         """
@@ -114,7 +170,7 @@ class UCubeClient:
         :raises:
         """
         seconds_passed = 0
-        while not self._login_payload["refresh_token"]:
+        while not self._refresh_token_exists or self.expired_token:
             if self.__exception_to_raise:
                 if isinstance(self.__exception_to_raise, (LoginFailed, asyncio.exceptions.TimeoutError)):
                     exception = self.__exception_to_raise
@@ -160,9 +216,9 @@ class UCubeClient:
             The async/sync method to call. Should be able to take in the login payload.
         """
         if not asyncio.iscoroutinefunction(method):
-            method(self._login_payload)
+            method(self.__login_payload)
         else:
-            asyncio.create_task(method(self._login_payload))
+            asyncio.create_task(method(self.__login_payload))
 
     def _set_refresh_token(self, refresh_token: str):
         """
@@ -173,7 +229,7 @@ class UCubeClient:
         refresh_token: str
             The refresh token to pass when logging in.
         """
-        self._login_payload["refresh_token"] = refresh_token
+        self.__login_payload["refresh_token"] = refresh_token
 
     def _set_token(self, token):
         """
@@ -207,7 +263,7 @@ class UCubeClient:
         """
         self.__exception_to_raise = exception
 
-    def _check_status(self, status, url) -> bool:
+    def _check_status(self, status, url, custom_error_messages: Dict[int, str] = None) -> bool:
         """
         Confirm the status of a URL
 
@@ -216,17 +272,29 @@ class UCubeClient:
         :return: True if the connection was a success.
         :raises: :ref:`invalid_token_exc` if there was an invalid token.
         """
+        error_messages = {
+            400: "WARNING (NOT CRITICAL): " + url + " was sent a bad request.",
+            404: "WARNING (NOT CRITICAL): " + url + " was not found.",
+            -1: "WARNING (NOT CRITICAL): " + url + " Failed to load. [Status: " + str(status) + "]"
+        }
+
+        if custom_error_messages:
+            for key, value in custom_error_messages.items():
+                error_messages[key] = value
+
+        error_message = error_messages.get(status)
+
         if status == 200:
             return True
         elif status == 401:
+            self.expired_token = True
             raise InvalidToken
-        elif status == 404:
-            if self.verbose:
-                # raise error.PageNotFound
-                print("WARNING (NOT CRITICAL): " + url + " was not found.")
         else:
-            if self.verbose:
-                print("WARNING (NOT CRITICAL): " + url + " Failed to load. [Status: " + str(status) + "]")
+            if not self.verbose:
+                return False
+            if not error_message:
+                error_message = error_messages.get(-1)
+            print(error_message)
 
     def __get_headers(self):
         return {'Authorization': f"Bearer {self.__token}"}

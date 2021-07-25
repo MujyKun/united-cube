@@ -9,7 +9,8 @@ class Video(BaseModel):
 
     Inherits from :class:`BaseModel`
 
-    .. warning:: It is not suggested to create a Video manually, but rather through the following method: :class:`UCube.objects.create_video`
+    .. warning::
+        It is not suggested to create a Video manually, but rather through the following method: :class:`UCube.objects.create_video`
 
     ``The information retrieved on a Video is directly from the UCube API and altered to fit this class.``
 

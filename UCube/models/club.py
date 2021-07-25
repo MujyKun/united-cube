@@ -1,9 +1,10 @@
-from typing import Optional, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING, Dict
 
 from . import BaseModel
 
 if TYPE_CHECKING:
     from .image import Image
+    from .board import Board
 
 
 class Club(BaseModel):
@@ -12,7 +13,8 @@ class Club(BaseModel):
 
     Inherits from :class:`BaseModel`
 
-    .. warning:: It is not suggested to create a Club manually, but rather through the following method: :class:`UCube.objects.create_club`
+    .. warning::
+        It is not suggested to create a Club manually, but rather through the following method: :class:`UCube.objects.create_club`
 
     ``The information retrieved on a Club is directly from the UCube API and altered to fit this class.``
 
@@ -32,6 +34,8 @@ class Club(BaseModel):
 
     Parameters
     ----------
+    slug: :class:`str`
+        The unique identifier of the Club.
     artist_name: :class:`str`
         The artist's name. Could also be a group.
     create_image: :class:`UCube.create_image`
@@ -72,6 +76,8 @@ class Club(BaseModel):
         Any external url to the Club.
     registered_time: :class:`str`
         The datetime for when the club was first registered.
+    boards: List[:class:`models.Board`]
+        A list of Boards that belong to the Club.
 
     """
     def __init__(self, artist_name: str, create_image, **options):
@@ -93,4 +99,4 @@ class Club(BaseModel):
         self.external_url: str = options.pop("external_url", None)
         self.registered_time: str = options.pop("register_datetime", None)
 
-
+        self.boards: Dict[str, Board] = {}

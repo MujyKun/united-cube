@@ -4,7 +4,10 @@ from typing import List
 import aiohttp
 from asyncio import get_event_loop
 from . import UCubeClient, InvalidToken, InvalidCredentials, LoginFailed, create_club, \
-    models, create_post, create_board
+    models, create_post, create_board, create_notification, check_expired_token
+
+from random import SystemRandom
+from string import ascii_letters, digits
 
 
 class UCubeClientAsync(UCubeClient):
@@ -35,14 +38,39 @@ class UCubeClientAsync(UCubeClient):
         if self._own_session and not self.web_session.closed:
             loop = asyncio.get_event_loop()
             if loop:
-                loop.create_task(self.web_session.close())
+                loop.create_task(self.web_session.close())  # only triggered if the client has further async code.
 
-    async def start(self):
+    async def start(self, load_boards=True, load_posts=True, load_notices=True, load_media=True,
+                    load_from_artist=True, load_to_artist=False, load_talk=False, follow_all_clubs=True):
         """Creates internal cache.
 
         This is the main process that should be run.
 
         This is a coroutine and must be awaited.
+
+        Parameters
+        ----------
+        load_boards: :class:`bool`
+            Whether to load up all of a Club's boards.
+        load_posts: :class:`bool`
+            Whether to load up all of the Posts of a Board.
+        load_notices: :class:`bool`
+            Whether to load up all of the Notice posts.
+        load_media: :class:`bool`
+            Whether to load up all of the Media posts.
+        load_from_artist: :class:`bool`
+            Whether to load up all of the From Artist posts.
+        load_to_artist: :class:`bool`
+            Whether to load up all of the To Artist posts.
+        load_talk: :class:`bool`
+            Whether to load up all of the talk posts.
+        follow_all_clubs: :class:`bool`
+            Whether to follow all clubs that are not followed.
+
+
+        .. warning:: All Clubs are always created no matter what. The params are dependent on each other. Attempting to
+            load ``notices``/``media``/``from artist``/``to artist``/``talk`` will not work without ``load_posts`` set
+            to ``True``. Attempting to load any posts will not work without ``load_boards`` set to ``True``.
 
         :raises: :class:`UCube.error.InvalidToken` If the token was invalid.
         :raises: :class:`UCube.error.InvalidCredentials` If the user credentials were invalid or not provided.
@@ -59,17 +87,37 @@ class UCubeClientAsync(UCubeClient):
                 raise InvalidCredentials
 
             if self._login_info_exists:
-                await self.__try_login()
+                await self._try_login()
                 await self._wait_for_login()  # wait for login or an exception to occur.
 
             if not await self.check_token_works():
                 raise InvalidToken
 
-            test_board_id = "o0QeX9BhRbSmbNw9j1CNNQ"
-            test_club_id = "FgSB4A8FTymgi_tLbOOAkw"
-            # posts = await self.fetch_board_posts(test_board_id)
-            # clubs = await self.fetch_all_clubs()
-            boards = await self.fetch_club_boards(test_club_id)
+            for club in await self.fetch_all_clubs():
+                if follow_all_clubs:
+                    await self.follow_club(club.slug)
+                    continue
+
+                if not load_boards:
+                    break
+
+                for board in await self.fetch_club_boards(club.slug):
+                    club.boards[board.slug] = board
+
+                    board_name = str(board)
+
+                    # cases to continue
+                    no_notices = not load_notices and board_name == "Notice"
+                    no_media = not load_media and board_name == "Media"
+                    no_to_artist = not load_to_artist and board_name == f"To {club.artist_name}"
+                    no_from_artist = not load_from_artist and board_name == f"From {club.artist_name}"
+                    no_talk = not load_talk and board_name == "Talk"
+
+                    if not load_posts or no_notices or no_media or no_to_artist or no_from_artist or no_talk:
+                        continue
+
+                    for post in await self.fetch_board_posts(board.slug, feed=True):
+                        board.posts[post.slug] = post
             self.cache_loaded = True
 
         except Exception as err:
@@ -78,7 +126,7 @@ class UCubeClientAsync(UCubeClient):
 
             raise err
 
-    async def __try_login(self):
+    async def _try_login(self):
         """
         Will attempt to login to UCube and set refresh token and token.
 
@@ -106,9 +154,11 @@ class UCubeClientAsync(UCubeClient):
                     self._set_refresh_token(refresh_token)
                 if token:
                     self._set_token(token)
+                self.expired_token = False
                 return
         self._set_exception(LoginFailed())
 
+    @check_expired_token
     async def fetch_club_boards(self, club_slug: str) -> List[models.Board]:
         """
         Retrieve a list of Boards from a Club.
@@ -131,17 +181,27 @@ class UCubeClientAsync(UCubeClient):
             if self._check_status(resp.status, url):
                 data = await resp.json()
                 for raw_board in data.get("items"):
-                    boards.append(create_board(raw_board))
+                    board = create_board(raw_board)
+                    boards.append(board)
+                    self.boards[board.slug] = board
         return boards
 
-    async def fetch_board_posts(self, board_slug: str) -> List[models.Post]:
+    @check_expired_token
+    async def fetch_board_posts(self, board_slug: str, feed=False, posts_per_page: int = 99999, page_number: int = 1) \
+            -> List[models.Post]:
         """
         Retrieve a list of Posts from a board.
 
         Parameters
         ----------
         board_slug: str
-            The slug (Unique Identifier) of a board.
+            The slug (unique identifier) of a board to search the feed for.
+        feed: bool
+            Whether to use the feeds endpoint. The feeds endpoint would retrieve the user information of a post.
+        posts_per_page: int
+            The amount of posts to retrieve per page.
+        page_number: int
+            The page number when paginating.
 
         Returns
         -------
@@ -150,18 +210,59 @@ class UCubeClientAsync(UCubeClient):
         posts = []
         replace_kwargs = {
             "{board_slug}": board_slug,
-            "{feed_amount}": "99999",
-            "{page_number}": "1"
+            "{feed_amount}": str(posts_per_page),
+            "{page_number}": str(page_number)
         }
-        url = self.replace(self._posts_url, **replace_kwargs)
+        url = self.replace(self._posts_url if not feed else self._feeds_url, **replace_kwargs)
         async with self.web_session.get(url=url, headers=self._headers) as resp:
             if self._check_status(resp.status, url):
                 data = await resp.json()
                 for raw_post in data.get("items"):
-                    posts.append(create_post(raw_post))
+                    post = create_post(raw_post)
+                    posts.append(post)
+                    if post.user:
+                        self.users[post.user.slug] = post.user
+                    self.posts[post.slug] = post
         return posts
 
-    async def fetch_all_clubs(self) -> List[models.Club]:
+    @check_expired_token
+    async def fetch_club_notifications(self, club_slug: str, notifications_per_page: int = 99999,
+                                       page_number: int = 1) \
+            -> List[models.Notification]:
+        """
+        Retrieve a list of Notifications from a club.
+
+        Parameters
+        ----------
+        club_slug: str
+            The slug (unique identifier) of a club to search the notifications for.
+        notifications_per_page: int
+            The amount of notifications to retrieve per page.
+        page_number: int
+            The page number when paginating.
+
+        Returns
+        -------
+        A list of Notifications: List[:class:`models.Notification`]
+        """
+        notifications = []
+        replace_kwargs = {
+            "{club_slug}": club_slug,
+            "{feed_amount}": str(notifications_per_page),
+            "{page_number}": str(page_number)
+        }
+        url = self.replace(self._notifications_url, **replace_kwargs)
+        async with self.web_session.get(url=url, headers=self._headers) as resp:
+            if self._check_status(resp.status, url):
+                data = await resp.json()
+                for raw_notification in data.get("items"):
+                    notification = create_notification(raw_notification)
+                    notifications.append(notification)
+                    self.notifications[notification.slug] = notification
+        return notifications
+
+    @check_expired_token
+    async def fetch_all_clubs(self, clubs_per_page: int = 99999, page_number: int = 1) -> List[models.Club]:
         """
         Fetch all Clubs from the UCube API.
 
@@ -172,16 +273,61 @@ class UCubeClientAsync(UCubeClient):
         clubs = []
 
         replace_kwargs = {
-            "{feed_amount}": "99999",
-            "{page_number}": "1"
+            "{feed_amount}": str(clubs_per_page),
+            "{page_number}": str(page_number)
         }
         url = self.replace(self._all_clubs_url, **replace_kwargs)
         async with self.web_session.get(url=url, headers=self._headers) as resp:
             if self._check_status(resp.status, url):
                 data = await resp.json()
                 for raw_club in data.get("items"):
-                    clubs.append(create_club(raw_club))
+                    club = create_club(raw_club)
+                    clubs.append(club)
+                    self.clubs[club.slug] = club
         return clubs
+
+    @check_expired_token
+    async def follow_club(self, club_slug: str) -> bool:
+        """
+        Follow a club.
+
+        Parameters
+        ----------
+        club_slug: :class:`str`
+            The unique identifier of the club to follow.
+
+        Returns
+        -------
+        Whether following the Club was successful.: :class:`bool`
+
+        """
+        replace_kwargs = {
+            "{club_slug}": club_slug,
+        }
+        payload = {
+            "nick_name": ''.join(SystemRandom().choice(ascii_letters + digits) for _ in range(10))
+        }
+        url = self.replace(self._follow_club_url, **replace_kwargs)
+        headers = self._headers
+        async with self.web_session.post(url=url, headers=headers, json=payload) as resp:
+            custom_error_message = {400: f"WARNING (NOT CRITICAL): Could not follow Club Slug: {club_slug} either due "
+                                         f"to a bad argument or they are already being followed."}
+            return self._check_status(resp.status, url, custom_error_message)
+
+    async def _refresh_token(self):
+        """
+        Refresh a token while logged in.
+        """
+        payload = {"refresh_token": self._get_refresh_token()}
+        async with self.web_session.post(url=self._auth_login_url, json=payload) as resp:
+            if self._check_status(resp.status, self._auth_login_url):
+                data = await resp.json()
+                token = data.get("token")
+                if token:
+                    self._set_token(token)
+                self.expired_token = False
+                return
+        self._set_exception(LoginFailed())
 
     async def check_token_works(self) -> bool:
         """
@@ -194,4 +340,8 @@ class UCubeClientAsync(UCubeClient):
         async with self.web_session.get(url=self._about_me_url, headers=self._headers) as resp:
             if resp.status == 200:
                 self._set_my_info(await resp.json())
+                self.expired_token = False
                 return True
+            elif resp.status == 401:
+                self.expired_token = True
+                return False
