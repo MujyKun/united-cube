@@ -1,10 +1,11 @@
-from typing import Optional, TYPE_CHECKING, Dict
+from typing import Optional, TYPE_CHECKING, Dict, List
 
 from . import BaseModel
 
 if TYPE_CHECKING:
     from .image import Image
     from .board import Board
+    from .notification import Notification
 
 
 class Club(BaseModel):
@@ -76,8 +77,10 @@ class Club(BaseModel):
         Any external url to the Club.
     registered_time: :class:`str`
         The datetime for when the club was first registered.
-    boards: List[:class:`models.Board`]
-        A list of Boards that belong to the Club.
+    boards: Dict[str, :class:`models.Board`]
+        A Dict of Boards that belong to the Club with the slug as the key.
+    notifications: List[:class`models.Notification`]
+        A list of Notifications that belong to the Club.
 
     """
     def __init__(self, artist_name: str, create_image, **options):
@@ -100,3 +103,4 @@ class Club(BaseModel):
         self.registered_time: str = options.pop("register_datetime", None)
 
         self.boards: Dict[str, Board] = {}
+        self.notifications: List[Notification] = []

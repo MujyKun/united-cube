@@ -41,7 +41,8 @@ class UCubeClientAsync(UCubeClient):
                 loop.create_task(self.web_session.close())  # only triggered if the client has further async code.
 
     async def start(self, load_boards=True, load_posts=True, load_notices=True, load_media=True,
-                    load_from_artist=True, load_to_artist=False, load_talk=False, follow_all_clubs=True):
+                    load_from_artist=True, load_to_artist=False, load_talk=False, load_comments=False,
+                    load_notifications=True, follow_all_clubs=True):
         """Creates internal cache.
 
         This is the main process that should be run.
@@ -64,13 +65,18 @@ class UCubeClientAsync(UCubeClient):
             Whether to load up all of the To Artist posts.
         load_talk: :class:`bool`
             Whether to load up all of the talk posts.
+        load_comments: :class:`bool`
+            Whether to load up comments.
+        load_notifications: :class:`bool`
+            Whether to load up notifications.
         follow_all_clubs: :class:`bool`
             Whether to follow all clubs that are not followed.
 
 
         .. warning:: All Clubs are always created no matter what. The params are dependent on each other. Attempting to
-            load ``notices``/``media``/``from artist``/``to artist``/``talk`` will not work without ``load_posts`` set
-            to ``True``. Attempting to load any posts will not work without ``load_boards`` set to ``True``.
+            load ``notices``/``media``/``from artist``/``to artist``/``talk``/``comments`` will not work without
+            ``load_posts`` set to ``True``. Attempting to load any posts will not work
+            without ``load_boards`` set to ``True``.
 
         :raises: :class:`UCube.error.InvalidToken`
             If the token was invalid.
@@ -101,10 +107,12 @@ class UCubeClientAsync(UCubeClient):
             for club in await self.fetch_all_clubs():
                 if follow_all_clubs:
                     await self.follow_club(club.slug)
-                    continue
+
+                if load_notifications:
+                    club.notifications = await self.fetch_club_notifications(club.slug)
 
                 if not load_boards:
-                    break
+                    continue
 
                 for board in await self.fetch_club_boards(club.slug):
                     club.boards[board.slug] = board
@@ -123,6 +131,8 @@ class UCubeClientAsync(UCubeClient):
 
                     for post in await self.fetch_board_posts(board.slug, feed=True):
                         board.posts[post.slug] = post
+                        if load_comments:
+                            post.comments = await self.fetch_post_comments(post.slug)
             self.cache_loaded = True
 
         except Exception as err:
@@ -232,8 +242,7 @@ class UCubeClientAsync(UCubeClient):
 
     @check_expired_token
     async def fetch_club_notifications(self, club_slug: str, notifications_per_page: int = 99999,
-                                       page_number: int = 1) \
-            -> List[models.Notification]:
+                                       page_number: int = 1) -> List[models.Notification]:
         """
         Retrieve a list of Notifications from a club.
 

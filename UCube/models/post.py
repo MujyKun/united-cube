@@ -5,6 +5,7 @@ if TYPE_CHECKING:
     from .image import Image
     from .video import Video
     from .user import User
+    from .comment import Comment
 
 
 class Post(BaseModel):
@@ -67,6 +68,8 @@ class Post(BaseModel):
         When the post was created.
     user: Optional[:class:`models.User`]
         The user that created the Post.
+    comments: List[:class:`models.Comment`]
+        A list of comments that belong to the Post.
     """
     def __init__(self, create_image, create_video, create_user, **options):
         super().__init__(options.get("slug"), options.get("name"))
@@ -88,6 +91,8 @@ class Post(BaseModel):
         self.posted_at = options.pop("register_datetime", None)
         user = options.pop("registrant", None)
         self.user: Optional[User] = None if not user else create_user(user)
+
+        self.comments: List[Comment] = []
 
     def __str__(self):
         return self.content
