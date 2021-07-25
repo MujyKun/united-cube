@@ -72,11 +72,16 @@ class UCubeClientAsync(UCubeClient):
             load ``notices``/``media``/``from artist``/``to artist``/``talk`` will not work without ``load_posts`` set
             to ``True``. Attempting to load any posts will not work without ``load_boards`` set to ``True``.
 
-        :raises: :class:`UCube.error.InvalidToken` If the token was invalid.
-        :raises: :class:`UCube.error.InvalidCredentials` If the user credentials were invalid or not provided.
-        :raises: :class:`UCube.error.BeingRateLimited` If the client is being rate-limited.
-        :raises: :class:`UCube.error.LoginFailed` Login process had failed.
-        :raises: :class:`asyncio.exceptions.TimeoutError` Waited too long for a login.
+        :raises: :class:`UCube.error.InvalidToken`
+            If the token was invalid.
+        :raises: :class:`UCube.error.InvalidCredentials`
+            If the user credentials were invalid or not provided.
+        :raises: :class:`UCube.error.BeingRateLimited`
+            If the client is being rate-limited.
+        :raises: :class:`UCube.error.LoginFailed`
+            Login process had failed.
+        :raises: :class:`asyncio.exceptions.TimeoutError`
+            Waited too long for a login.
         """
         try:
             if not self.web_session:

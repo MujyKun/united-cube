@@ -2,10 +2,8 @@ import asyncio
 from . import InvalidToken, LoginFailed
 from . import BASE_SITE
 
-from typing import Dict, TYPE_CHECKING, List
-
-if TYPE_CHECKING:
-    from models import Post, Club, Board, User, Notification
+from typing import Dict, List, Optional
+from .models import Post, Club, Board, User, Notification
 
 
 class UCubeClient:
@@ -142,21 +140,84 @@ class UCubeClient:
         """Whether a refresh token is present."""
         return bool(self.__login_payload["refresh_token"])
 
-    def _get_refresh_token(self):
+    def _get_refresh_token(self) -> Optional[str]:
         """Get the refresh token."""
         return self.__login_payload["refresh_token"]
 
-    def get_club(self):
-        ...
+    def get_club(self, club_slug: str) -> Optional[Club]:
+        """
+        Get a Club if it exists.
 
-    def get_board(self):
-        ...
+        Parameters
+        ----------
+        club_slug: str
+            The unique identifier of the Club.
 
-    def get_post(self):
-        ...
+        Returns
+        -------
+        The Club associated with the slug if it exists.: :class:`models.Club`
+        """
+        return self.clubs.get(club_slug)
 
-    def get_user(self):
-        ...
+    def get_board(self, board_slug: str) -> Optional[Board]:
+        """
+        Get a Board if it exists.
+
+        Parameters
+        ----------
+        board_slug: str
+            The unique identifier of the Board.
+
+        Returns
+        -------
+        The Board associated with the slug if it exists.: :class:`models.Board`
+        """
+        return self.boards.get(board_slug)
+
+    def get_post(self, post_slug: str) -> Optional[Post]:
+        """
+        Get a Post if it exists.
+
+        Parameters
+        ----------
+        post_slug: str
+            The unique identifier of the Post.
+
+        Returns
+        -------
+        The Post associated with the slug if it exists.: :class:`models.Post`
+        """
+        return self.posts.get(post_slug)
+
+    def get_user(self, user_slug: str) -> Optional[User]:
+        """
+        Get a User if it exists.
+
+        Parameters
+        ----------
+        user_slug: str
+            The unique identifier of the User.
+
+        Returns
+        -------
+        The User associated with the slug if it exists.: :class:`models.User`
+        """
+        return self.users.get(user_slug)
+
+    def get_notification(self, notification_slug: str) -> Optional[Notification]:
+        """
+        Get a Notification if it exists.
+
+        Parameters
+        ----------
+        notification_slug: str
+            The unique identifier of the Notification.
+
+        Returns
+        -------
+        The Notification associated with the slug if it exists.: :class:`models.Notification`
+        """
+        return self.notifications.get(notification_slug)
 
     async def _wait_for_login(self, timeout=15):
         """
@@ -167,7 +228,8 @@ class UCubeClient:
         timeout: int
             Amount of seconds before an exception is raised.
 
-        :raises:
+        :raises: :class:`UCube.error.LoginFailed` Login process had failed.
+        :raises: :class:`asyncio.exceptions.TimeoutError` Waited too long for a login.
         """
         seconds_passed = 0
         while not self._refresh_token_exists or self.expired_token:
