@@ -110,6 +110,7 @@ def create_comment(raw_comment) -> Comment:
     -------
     A Comment Model: :class:`UCube.models.Comment`
     """
+    raw_comment["create_user"] = create_user
     return Comment(**raw_comment)
 
 
