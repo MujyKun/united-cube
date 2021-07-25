@@ -141,7 +141,7 @@ Get Account Token
 =================
 There are two ways to log in.
 The first way is using a username and password to login which will automatically refresh your token.
-The second way is getting your account token manually and will require manual updates about every 6 months.
+The second way is getting your account token manually and being logged in for a very short amount of time.
 
 In order to get your account token, go to https://www.united-cube.com/ and Inspect Element (F12).
 Then go to the `Network` tab and filter by `XHR`. Then refresh your page (F5) and look for ``popup`` or ``clubs`` under `XHR`.
@@ -151,6 +151,8 @@ For example, you may see (This is just an example):
 ``Authorization: Bearer ABCDEFGHIJKLMNOPQRSTUVWXYZ``
 Then ``ABCDEFGHIJKLMNOPQRSTUVWXYZ`` would be your auth token for UCube.
 It is suggested to have the auth token as an environment variable.
+
+The first method to log in is the best way and SHOULD be the way that you log in.
 
 
 Asynchronous Usage

@@ -10,7 +10,9 @@ class UCubeClient:
     """
     Abstract & Parent Client for connecting to UCube and creating the internal cache.
 
-    .. warning:: Do not create an object directly from this class. Instead, create a :class:`UCube.UCubeClientSync` or :class:`UCube.UCubeClientAsync` object since those are concrete.
+    .. warning::
+        Do not create an object directly from this class. Instead, create a :class:`UCube.UCubeClientSync` or
+        :class:`UCube.UCubeClientAsync` object since those are concrete.
 
     Parameters
     ----------
@@ -82,6 +84,7 @@ class UCubeClient:
         self._boards_url = self._api_url + "boards" + self._club_slug
         self._feeds_url = self._api_url + "feeds" + self._board_slug + f"&{self._per_page_and_number}"
         self._notifications_url = self._api_url + "notifications" + self._club_slug + f"&{self._per_page_and_number}"
+        self._comments_url = self._api_url + "comments?post={post_slug}" + f"&{self._per_page_and_number}&order=desc"
 
         self._club_info_url = self._api_url + "clubs/{club_slug}"
         self._follow_club_url = self._club_info_url + "/join"

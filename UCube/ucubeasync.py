@@ -4,7 +4,7 @@ from typing import List
 import aiohttp
 from asyncio import get_event_loop
 from . import UCubeClient, InvalidToken, InvalidCredentials, LoginFailed, create_club, \
-    models, create_post, create_board, create_notification, check_expired_token
+    models, create_post, create_board, create_notification, create_comment, check_expired_token
 
 from random import SystemRandom
 from string import ascii_letters, digits
@@ -265,6 +265,41 @@ class UCubeClientAsync(UCubeClient):
                     notifications.append(notification)
                     self.notifications[notification.slug] = notification
         return notifications
+
+    @check_expired_token
+    async def fetch_post_comments(self, post_slug: str, comments_per_page: int = 99999,
+                                  page_number: int = 1) -> List[models.Comment]:
+        """
+        Retrieve a list of Comments from a Post.
+
+        Parameters
+        ----------
+        post_slug: str
+            The slug (unique identifier) of a Post to search the Comments for.
+        comments_per_page: int
+            The amount of notifications to retrieve per page.
+        page_number: int
+            The page number when paginating.
+
+        Returns
+        -------
+        A list of Comments: List[:class:`models.Comment`]
+        """
+        comments = []
+        replace_kwargs = {
+            "{post_slug}": post_slug,
+            "{feed_amount}": str(comments_per_page),
+            "{page_number}": str(page_number)
+        }
+        url = self.replace(self._comments_url, **replace_kwargs)
+        async with self.web_session.get(url=url, headers=self._headers) as resp:
+            if self._check_status(resp.status, url):
+                data = await resp.json()
+                for raw_comment in data.get("items"):
+                    comment = create_comment(raw_comment)
+                    comments.append(comment)
+                    self.comments[comment.slug] = comment
+        return comments
 
     @check_expired_token
     async def fetch_all_clubs(self, clubs_per_page: int = 99999, page_number: int = 1) -> List[models.Club]:
