@@ -3,7 +3,7 @@ from . import InvalidToken, LoginFailed
 from . import BASE_SITE
 
 from typing import Dict, List, Optional
-from .models import Post, Club, Board, User, Notification
+from .models import Post, Club, Board, User, Notification, Comment
 
 
 class UCubeClient:
@@ -120,6 +120,7 @@ class UCubeClient:
         self.posts: Dict[str, Post] = {}
         self.users: Dict[str, User] = {}
         self.notifications: Dict[str, Notification] = {}
+        self.comments: Dict[str, Comment] = {}
 
     @property
     def _my_info_exists(self) -> bool:
@@ -218,6 +219,21 @@ class UCubeClient:
         The Notification associated with the slug if it exists.: :class:`models.Notification`
         """
         return self.notifications.get(notification_slug)
+
+    def get_comment(self, comment_slug: str) -> Optional[Comment]:
+        """
+        Get a Comment if it exists.
+
+        Parameters
+        ----------
+        comment_slug: str
+            The unique identifier of the Comment.
+
+        Returns
+        -------
+        The Comment associated with the slug if it exists.: :class:`models.Comment`
+        """
+        return self.comments.get(comment_slug)
 
     async def _wait_for_login(self, timeout=15):
         """

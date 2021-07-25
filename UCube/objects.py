@@ -1,4 +1,4 @@
-from .models import Club, Image, Post, Video, Board, User, Notification
+from .models import Club, Image, Post, Video, Board, User, Notification, Comment
 
 BASE_SITE = "https://united-cube.com/"
 
@@ -98,6 +98,21 @@ def create_notification(raw_notification) -> Notification:
     return Notification(**raw_notification)
 
 
+def create_comment(raw_comment) -> Comment:
+    """
+
+    Parameters
+    ----------
+    raw_comment: dict
+        The raw information about a comment directly from a UCube API endpoint.
+
+    Returns
+    -------
+    A Comment Model: :class:`UCube.models.Comment`
+    """
+    return Comment(**raw_comment)
+
+
 def create_post(raw_post) -> Post:
     """
 
@@ -115,5 +130,6 @@ def create_post(raw_post) -> Post:
     raw_post["create_user"] = create_user
     raw_post["base_url"] = BASE_SITE
     return Post(**raw_post)
+
 
 

@@ -66,6 +66,12 @@ Notification
 .. autoclass:: UCube.models.Notification
     :members:
 
+=======
+Comment
+=======
+.. autoclass:: UCube.models.Comment
+    :members:
+
 =====
 Image
 =====
