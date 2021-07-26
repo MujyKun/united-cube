@@ -23,7 +23,7 @@ This is a **wrapper** for United-Cube's private API, but may be referred to as a
 
 ### Installation
 
-In a terminal, type `pip install ucube`.  
+In a terminal, type `pip install UCube`.  
 
 To install from source:  
 `pip install git+https://github.com/MujyKun/united-cube.git`
