@@ -11,7 +11,7 @@ from asyncio import iscoroutinefunction
 __title__ = 'UCube'
 __author__ = 'MujyKun'
 __license__ = 'MIT'
-__version__ = '0.0.2'
+__version__ = '0.0.2.0'
 
 
 def check_expired_token(func):
