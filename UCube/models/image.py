@@ -70,7 +70,7 @@ class Image(BaseModel):
         if not options.get("slug"):
             # The slug will become the path if it does not exist.
             options["slug"] = path
-        super().__init__(options.get("slug"))
+        super().__init__(options.get("slug"), self.__extract_photo_name(path))
 
         self.path: str = path
         self.size: int = options.pop("size", 0)
@@ -79,3 +79,17 @@ class Image(BaseModel):
 
     def __int__(self):
         return self.size
+
+    def __extract_photo_name(self, url: str):
+        """Retrieve the file name of the photo from the url.
+
+        :param url: :class:`str`
+            The URL of the photo.
+        """
+        last_slash_pos = url.rfind("/")
+        if last_slash_pos == -1:
+            return None
+        elif last_slash_pos == len(url) - 1:
+            return self.__extract_photo_name(url[0:len(url) - 1])
+        else:
+            return url[last_slash_pos + 1: len(url)]
