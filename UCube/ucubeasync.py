@@ -35,10 +35,13 @@ class UCubeClientAsync(UCubeClient):
 
     def __del__(self):
         """Terminate the web session if it was created by this object."""
-        if self._own_session and not self.web_session.closed:
-            loop = asyncio.get_event_loop()
-            if loop:
-                loop.create_task(self.web_session.close())  # only triggered if the client has further async code.
+        try:
+            if self._own_session and not self.web_session.closed:
+                loop = asyncio.get_event_loop()
+                if loop:
+                    loop.create_task(self.web_session.close())  # only triggered if the client has further async code.
+        except Exception:
+            ...
 
     async def start(self, load_boards=True, load_posts=True, load_notices=True, load_media=True,
                     load_from_artist=True, load_to_artist=False, load_talk=False, load_comments=False,
@@ -117,7 +120,7 @@ class UCubeClientAsync(UCubeClient):
 
                     board_name = str(board)
 
-                    # cases to continue
+                    # cases to go to the next board.
                     no_notices = not load_notices and board_name == "Notice"
                     no_media = not load_media and board_name == "Media"
                     no_to_artist = not load_to_artist and board_name == f"To {club.artist_name}"
@@ -183,6 +186,8 @@ class UCubeClientAsync(UCubeClient):
         """
         Retrieve a list of Boards from a Club.
 
+        This is a coroutine and must be awaited.
+
         Parameters
         ----------
         club_slug: str
@@ -211,6 +216,8 @@ class UCubeClientAsync(UCubeClient):
             -> List[models.Post]:
         """
         Retrieve a list of Posts from a board.
+
+        This is a coroutine and must be awaited.
 
         Parameters
         ----------
@@ -251,6 +258,8 @@ class UCubeClientAsync(UCubeClient):
         """
         Retrieve a list of Notifications from a club.
 
+        This is a coroutine and must be awaited.
+
         Parameters
         ----------
         club_slug: str
@@ -286,6 +295,8 @@ class UCubeClientAsync(UCubeClient):
         """
         Retrieve a list of Comments from a Post.
 
+        This is a coroutine and must be awaited.
+
         Parameters
         ----------
         post_slug: str
@@ -320,6 +331,8 @@ class UCubeClientAsync(UCubeClient):
         """
         Fetch a Post by it's slug.
 
+        This is a coroutine and must be awaited.
+
         Parameters
         ----------
         post_slug: :class:`str`
@@ -351,6 +364,8 @@ class UCubeClientAsync(UCubeClient):
         """
         Fetch all Clubs from the UCube API.
 
+        This is a coroutine and must be awaited.
+
         Returns
         -------
         A list of Clubs: List[:class:`models.Club`]
@@ -375,6 +390,8 @@ class UCubeClientAsync(UCubeClient):
     async def follow_club(self, club_slug: str) -> bool:
         """
         Follow a club.
+
+        This is a coroutine and must be awaited.
 
         Parameters
         ----------
@@ -407,6 +424,7 @@ class UCubeClientAsync(UCubeClient):
         Compares with the already existing notifications.
         This will also create the posts associated with the notification so they can be used efficiently.
 
+        This is a coroutine and must be awaited.
 
         Returns
         -------
@@ -431,6 +449,8 @@ class UCubeClientAsync(UCubeClient):
         Start checking for new notifications in a new loop and call the hook with the list of new Notifications
 
         This will also create the posts associated with the notification so they can be used efficiently.
+
+        This is a coroutine and must be awaited.
         """
         if not self._hook:
             raise NoHookFound
@@ -450,6 +470,9 @@ class UCubeClientAsync(UCubeClient):
     async def _refresh_token(self):
         """
         Refresh a token while logged in.
+
+        This is a coroutine and must be awaited.
+
         """
         payload = {"refresh_token": self._get_refresh_token()}
         async with self.web_session.post(url=self._auth_login_url, json=payload) as resp:

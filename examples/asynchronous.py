@@ -29,7 +29,7 @@ Rename .env.example to .env and set UCUBE_AUTH to the token.
 
 Before running this file, confirm that you used `pip install -r requirements.txt` in the examples directory.
 
-If you are running in an Synchronous environment, go take a look at the Synchronous examples file.
+If you are running in a Synchronous environment, go take a look at the Synchronous examples file.
 """
 
 
@@ -143,8 +143,6 @@ class Example:
 
         This is a hook method. Whenever there is a notification, this method will be called.
         """
-        print(notifications)
-        print(self.ucube_client.cache_loaded)
         for notification in notifications:
             post = self.ucube_client.get_post(notification.post_slug)
             if not post:
@@ -159,6 +157,7 @@ class Example:
             # in things you may be able to do.
             # There is a UCube discord bot (below) if you want to see a real usage.
             # https://github.com/MujyKun/united-cube-bot
+            breakpoint()
 
 
 if __name__ == '__main__':

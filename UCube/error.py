@@ -6,13 +6,13 @@ class InvalidToken(Exception):
 
 class InvalidCredentials(Exception):
     """An Exception raised when no valid credentials were supplied."""
-    def __init__(self, msg: str):
+    def __init__(self, msg: str = "The credentials for a token or a username/password could not be found."):
         super(InvalidCredentials, self).__init__(msg)
 
 
 class SomethingWentWrong(Exception):
     """An Exception raised when something went wrong."""
-    def __init__(self, msg: str):
+    def __init__(self, msg: str = "UCube came across an unexpected issue."):
         super(SomethingWentWrong, self).__init__(msg)
 
 
