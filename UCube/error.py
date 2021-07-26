@@ -22,6 +22,12 @@ class LoginFailed(Exception):
         super(LoginFailed, self).__init__(msg)
 
 
+class NoHookFound(Exception):
+    """An Exception raised when a loop for the hook was started but did actually have a hook."""
+    def __init__(self, msg: str = "No Hook was passed into the UCube client."):
+        super(NoHookFound, self).__init__(msg)
+
+
 class PageNotFound(Exception):
     r"""
     An Exception Raised When a link was not found.

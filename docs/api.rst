@@ -134,6 +134,11 @@ Being Rate Limited
 .. autoexception:: UCube.BeingRateLimited
     :members:
 
+===========
+NoHookFound
+===========
+.. autoexception:: UCube.NoHookFound
+    :members:
 
 .. _account_token:
 

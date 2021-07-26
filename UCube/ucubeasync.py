@@ -1,10 +1,10 @@
 import asyncio
-from typing import List
+from typing import List, Optional
 
 import aiohttp
 from asyncio import get_event_loop
 from . import UCubeClient, InvalidToken, InvalidCredentials, LoginFailed, create_club, \
-    models, create_post, create_board, create_notification, create_comment, check_expired_token
+    models, create_post, create_board, create_notification, create_comment, check_expired_token, NoHookFound
 
 from random import SystemRandom
 from string import ascii_letters, digits
@@ -42,7 +42,7 @@ class UCubeClientAsync(UCubeClient):
 
     async def start(self, load_boards=True, load_posts=True, load_notices=True, load_media=True,
                     load_from_artist=True, load_to_artist=False, load_talk=False, load_comments=False,
-                    load_notifications=True, follow_all_clubs=True):
+                    follow_all_clubs=True):
         """Creates internal cache.
 
         This is the main process that should be run.
@@ -67,13 +67,12 @@ class UCubeClientAsync(UCubeClient):
             Whether to load up all of the talk posts.
         load_comments: :class:`bool`
             Whether to load up comments.
-        load_notifications: :class:`bool`
-            Whether to load up notifications.
         follow_all_clubs: :class:`bool`
             Whether to follow all clubs that are not followed.
 
 
-        .. warning:: All Clubs are always created no matter what. The params are dependent on each other. Attempting to
+        .. warning:: All Clubs and Notifications are always created no matter what.
+            The params are dependent on each other. Attempting to
             load ``notices``/``media``/``from artist``/``to artist``/``talk``/``comments`` will not work without
             ``load_posts`` set to ``True``. Attempting to load any posts will not work
             without ``load_boards`` set to ``True``.
@@ -108,8 +107,7 @@ class UCubeClientAsync(UCubeClient):
                 if follow_all_clubs:
                     await self.follow_club(club.slug)
 
-                if load_notifications:
-                    club.notifications = await self.fetch_club_notifications(club.slug)
+                club.notifications = await self.fetch_club_notifications(club.slug)
 
                 if not load_boards:
                     continue
@@ -134,6 +132,9 @@ class UCubeClientAsync(UCubeClient):
                         if load_comments:
                             post.comments = await self.fetch_post_comments(post.slug)
             self.cache_loaded = True
+
+            if self._hook:
+                await self.start_loop_for_hook()
 
         except Exception as err:
             if self._own_session:
@@ -311,6 +312,37 @@ class UCubeClientAsync(UCubeClient):
         return comments
 
     @check_expired_token
+    async def fetch_post(self, post_slug: str, load_comments=False) -> Optional[models.Post]:
+        """
+        Fetch a Post by it's slug.
+
+        Parameters
+        ----------
+        post_slug: :class:`str`
+            The post's unique identifier.
+        load_comments: :class:`bool`
+            Whether to load up the comments of the Post.
+
+        Returns
+        -------
+        The Post Object if there is one.: :class:`models.Post`
+
+        """
+        replace_kwargs = {
+            "post_slug": post_slug
+        }
+        url = self.replace(self._single_post_url, **replace_kwargs)
+        async with self.web_session.get(url=url, headers=self._headers) as resp:
+            if self._check_status(resp.status, url):
+                raw_post = await resp.json()
+                post = create_post(raw_post)
+                if load_comments:
+                    post.comments = await self.fetch_post_comments(post.slug)
+                self.posts[post.slug] = post
+                return post
+        return
+
+    @check_expired_token
     async def fetch_all_clubs(self, clubs_per_page: int = 99999, page_number: int = 1) -> List[models.Club]:
         """
         Fetch all Clubs from the UCube API.
@@ -362,6 +394,54 @@ class UCubeClientAsync(UCubeClient):
             custom_error_message = {400: f"WARNING (NOT CRITICAL): Could not follow Club Slug: {club_slug} either due "
                                          f"to a bad argument or they are already being followed."}
             return self._check_status(resp.status, url, custom_error_message)
+
+    @check_expired_token
+    async def check_new_notifications(self) -> List[models.Notification]:
+        """
+        Checks and returns new notifications for every club.
+
+        Compares with the already existing notifications.
+        This will also create the posts associated with the notification so they can be used efficiently.
+
+
+        Returns
+        -------
+        A list of new Notifications.: List[:class:`models.Notification`]
+        """
+        all_new_notifications = []
+        for club in self.clubs.values():
+            notifications = await self.fetch_club_notifications(club.slug, notifications_per_page=15)
+            new_notifications = [notification for notification in notifications if notification not in
+                                 club.notifications]
+            all_new_notifications = all_new_notifications + new_notifications
+            club.notifications = club.notifications + new_notifications
+
+            for notification in new_notifications:
+                if notification.post_slug:
+                    # will add new Post to cache if it exists.
+                    await self.fetch_post(notification.post_slug)
+        return all_new_notifications
+
+    async def start_loop_for_hook(self):
+        """
+        Start checking for new notifications in a new loop and call the hook with the list of new Notifications
+
+        This will also create the posts associated with the notification so they can be used efficiently.
+        """
+        if not self._hook:
+            raise NoHookFound
+
+        self._hook_loop = True
+        while self._hook_loop:
+            await asyncio.sleep(25)
+            new_notifications = await self.check_new_notifications()
+            if not new_notifications:
+                continue
+
+            if not asyncio.iscoroutinefunction(self._hook):
+                self._hook(new_notifications)
+            else:
+                await self._hook(new_notifications)
 
     async def _refresh_token(self):
         """

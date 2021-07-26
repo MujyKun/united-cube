@@ -1,7 +1,7 @@
 from . import models
 
 from .error import InvalidToken, PageNotFound, BeingRateLimited, \
-    SomethingWentWrong, InvalidCredentials, LoginFailed
+    SomethingWentWrong, InvalidCredentials, LoginFailed, NoHookFound
 
 from .objects import create_club, create_image, BASE_SITE, create_post, create_video, create_board, create_user, \
     create_notification, create_comment

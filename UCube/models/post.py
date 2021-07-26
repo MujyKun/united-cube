@@ -58,6 +58,8 @@ class Post(BaseModel):
         The unique identifier of the Post.
     content: :class:`str`
         The post content (without HTML).
+    board_slug: :class:`str`
+        The Post Board slug.
     videos: List[:class:`Video`]
         A list of videos that belong to the post.
     images: List[:class:`models.Image`]
@@ -74,6 +76,8 @@ class Post(BaseModel):
     def __init__(self, create_image, create_video, create_user, **options):
         super().__init__(options.get("slug"), options.get("name"))
         self.content: str = self.remove_html(options.pop("content", ""))
+
+        self.board_slug: str = options.pop("board_slug", None)
 
         self.images: List[Image] = []
         self.videos: List[Video] = []

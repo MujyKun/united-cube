@@ -2,7 +2,7 @@ import asyncio
 from . import InvalidToken, LoginFailed
 from . import BASE_SITE
 
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 from .models import Post, Club, Board, User, Notification, Comment
 
 
@@ -29,7 +29,7 @@ class UCubeClient:
         In order to find your token, please refer to :ref:`account_token`
     hook:
         A passed in method that will be called every time there is a new notification.
-        This method must take in a :class:`models.Notification` object.
+        This method must take in a list of :class:`models.Notification` objects.
 
     Attributes
     -----------
@@ -37,13 +37,9 @@ class UCubeClient:
         Whether to print out verbose messages.
     web_session:
         An aiohttp or requests client session.
-    user_notifications: list
-        Most recent notifications of the account connected.
     cache_loaded: bool
         Whether the Internal UCache Cache is fully loaded.
         This will change for a split moment when grabbing a new post.
-    clubs_followed: List[:class:`models.Club`]
-        A list of the clubs that the client is following.
     clubs: Dict[:class:`str`, :class:`models.Club`]
         A dict of all Clubs in cache with the slug as the key.
     boards: Dict[:class:`str`, :class:`models.Board`]
@@ -65,9 +61,6 @@ class UCubeClient:
 
         self.__exception_to_raise = None
 
-        self.user_notifications = []
-
-        self._old_notifications = []
         self._headers: dict = self.__get_headers()
 
         self._base_site = BASE_SITE
@@ -80,6 +73,7 @@ class UCubeClient:
 
         # slug is the unique identifier that UCube uses for a certain object.
         self._all_clubs_url = self._api_url + "clubs?" + self._per_page_and_number
+        self._single_post_url = self._api_url + "posts/{post_slug}"
         self._posts_url = self._api_url + "posts" + "?board={board_slug}&" + self._per_page_and_number
         self._boards_url = self._api_url + "boards" + self._club_slug
         self._feeds_url = self._api_url + "feeds" + self._board_slug + f"&{self._per_page_and_number}"
@@ -113,11 +107,11 @@ class UCubeClient:
         # Whether a UCube Client owns the web session or if it belongs to another application.
         self._own_session = False
 
-        self._method_to_call = hook
+        self._hook = hook
+        self._hook_loop = False
 
         self.expired_token = False
 
-        self.clubs_followed: List[Club] = []
         self.clubs: Dict[str, Club] = {}
         self.boards: Dict[str, Board] = {}
         self.posts: Dict[str, Post] = {}
@@ -143,6 +137,10 @@ class UCubeClient:
     def _refresh_token_exists(self) -> bool:
         """Whether a refresh token is present."""
         return bool(self.__login_payload["refresh_token"])
+
+    def stop(self):
+        """Stop the hook loop."""
+        self._hook_loop = False
 
     def _get_refresh_token(self) -> Optional[str]:
         """Get the refresh token."""
