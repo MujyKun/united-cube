@@ -305,7 +305,7 @@ class UCubeClientSync(UCubeClient):
 
         """
         replace_kwargs = {
-            "post_slug": post_slug
+            "{post_slug}": post_slug
         }
         url = self.replace(self._single_post_url, **replace_kwargs)
         with self.web_session.get(url=url, headers=self._headers) as resp:
