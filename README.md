@@ -44,21 +44,11 @@ For example, you may see (This is just an example):
 Then ``ABCDEFGHIJKLMNOPQRSTUVWXYZ`` would be your auth token for UCube. 
 It is suggested to have the auth token as an environment variable.
 
-The first method to log in is the best way and SHOULD be the way that you log in.  
+The first method to log in (username & password) is the best way and **SHOULD** be the way that you log in.  
 
 #### CODE EXAMPLES
 
-```python
-
-
-# Asynchronous
-
-
-# Synchronous
-
-
-```
-**[More Detailed Asynchronous Example](https://github.com/MujyKun/united-cube/blob/master/examples/asynchronous.py)**  
-**[More Detailed Synchronous Example](https://github.com/MujyKun/united-cube/blob/master/examples/synchronous.py)**
+**[Asynchronous Example](https://github.com/MujyKun/united-cube/blob/master/examples/asynchronous.py)**  
+**[Synchronous Example](https://github.com/MujyKun/united-cube/blob/master/examples/synchronous.py)**
 
 ### **[API Documentation](https://ucube.readthedocs.io/en/latest/)**
