@@ -79,7 +79,7 @@ class UCubeClientSync(UCubeClient):
                 raise InvalidCredentials
 
             if self._login_info_exists:
-                self.__try_login()
+                self._try_login()
 
             if not self.check_token_works():
                 raise InvalidToken
@@ -120,7 +120,7 @@ class UCubeClientSync(UCubeClient):
 
             raise err
 
-    def __try_login(self):
+    def _try_login(self):
         """
         Will attempt to login to UCube and set refresh token and token.
 

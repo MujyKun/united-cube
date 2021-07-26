@@ -76,4 +76,3 @@ class Notification(BaseModel):
         self.board_name = data.pop("board_name", None)
         self.board_slug = data.pop("board_slug", None)
         self.board_type = data.pop("board_type", None)
-

@@ -131,6 +131,3 @@ def create_post(raw_post) -> Post:
     raw_post["create_user"] = create_user
     raw_post["base_url"] = BASE_SITE
     return Post(**raw_post)
-
-
-

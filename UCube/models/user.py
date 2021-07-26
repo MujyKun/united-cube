@@ -1,9 +1,6 @@
-from typing import Optional, TYPE_CHECKING
+from typing import Optional
 
 from . import BaseModel
-
-if TYPE_CHECKING:
-    from .image import Image
 
 
 class User(BaseModel):
@@ -39,7 +36,8 @@ class User(BaseModel):
     nick_name: :class:`str`
         The name of the user.
     base_url: :class:`str`
-        The Base URL of the image site. This is especially useful if there are several base urls for an image if UCube is using an external image host.
+        The Base URL of the image site.
+        This is especially useful if there are several base urls for an image if UCube is using an external image host.
     profile_path: :class:`str`
         The path to the profile photo of the user.
 
@@ -55,5 +53,3 @@ class User(BaseModel):
         image = options.pop("profile_path", None)
 
         self.profile_image = None if not image else base_url + image
-
-

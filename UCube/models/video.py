@@ -61,4 +61,3 @@ class Video(BaseModel):
 
         self.url: str = url
         self.thumbnail: Optional[str] = options.pop("image", None)
-
