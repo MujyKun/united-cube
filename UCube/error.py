@@ -23,7 +23,7 @@ class LoginFailed(Exception):
 
 
 class NoHookFound(Exception):
-    """An Exception raised when a loop for the hook was started but did actually have a hook."""
+    """An Exception raised when a loop for the hook was started but did not actually have a hook method."""
     def __init__(self, msg: str = "No Hook was passed into the UCube client."):
         super(NoHookFound, self).__init__(msg)
 

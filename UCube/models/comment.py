@@ -48,7 +48,7 @@ class Comment(BaseModel):
         The parent slug/uid if there was one.
     created_at: :class:`str`
         The timestamp for when the comment was created.
-    user: Optional[:class:`models.User`]
+    user: Optional[:class:`User`]
         The User that created the comment.
     """
     def __init__(self, uid, create_user, **options):

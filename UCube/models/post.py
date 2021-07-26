@@ -15,7 +15,8 @@ class Post(BaseModel):
     Inherits from :class:`BaseModel`
 
     .. warning::
-        It is not suggested to create a Post manually, but rather through the following method: :class:`UCube.objects.create_post`
+        It is not suggested to create a Post manually,
+        but rather through the following method: :class:`UCube.objects.create_post`
 
     ``The information retrieved on a Post is directly from the UCube API and altered to fit this class.``
 
@@ -50,7 +51,8 @@ class Post(BaseModel):
     media: List[:class:`dict`]
         Media that belongs to a post.
     base_url: :class:`str`
-        The Base URL of the image site. This is especially useful if there are several base urls for an image if UCube is using an external image host.
+        The Base URL of the image site. This is especially useful if there are several base urls for an image if
+        UCube is using an external image host.
 
     Attributes
     ----------
@@ -62,15 +64,15 @@ class Post(BaseModel):
         The Post Board slug.
     videos: List[:class:`Video`]
         A list of videos that belong to the post.
-    images: List[:class:`models.Image`]
+    images: List[:class:`Image`]
         A list of images that belong to the Post.
     comment_count: :class:`int`
         The amount of comments.
     posted_at: :class:`str`
         When the post was created.
-    user: Optional[:class:`models.User`]
+    user: Optional[:class:`User`]
         The user that created the Post.
-    comments: List[:class:`models.Comment`]
+    comments: List[:class:`Comment`]
         A list of comments that belong to the Post.
     """
     def __init__(self, create_image, create_video, create_user, **options):

@@ -14,7 +14,8 @@ class Board(BaseModel):
     Inherits from :class:`BaseModel`
 
     .. warning::
-        It is not suggested to create a Board manually, but rather through the following method: :class:`UCube.objects.create_board`
+        It is not suggested to create a Board manually,
+        but rather through the following method: :class:`UCube.objects.create_board`
 
     ``The information retrieved on a Board is directly from the UCube API and altered to fit this class.``
 
@@ -47,7 +48,7 @@ class Board(BaseModel):
         Whether the board is active.
     club_slug: :class:`str`
         The club slug that the board belongs to.
-    posts: Dict[:class:`str`, :class:`models.Post`]
+    posts: Dict[:class:`str`, :class:`Post`]
 
     """
     def __init__(self, **options):

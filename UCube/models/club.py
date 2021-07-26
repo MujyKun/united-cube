@@ -15,7 +15,8 @@ class Club(BaseModel):
     Inherits from :class:`BaseModel`
 
     .. warning::
-        It is not suggested to create a Club manually, but rather through the following method: :class:`UCube.objects.create_club`
+        It is not suggested to create a Club manually,
+        but rather through the following method: :class:`UCube.objects.create_club`
 
     ``The information retrieved on a Club is directly from the UCube API and altered to fit this class.``
 
@@ -63,23 +64,23 @@ class Club(BaseModel):
     ----------
     artist_name: :class:`str`
         The artist's name. Could also be a group.
-    artist_logo: Optional[:class:`UCube.models.Image`]
+    artist_logo: Optional[:class:`Image`]
         The artist logo as an Image. May be None.
     color_one: :class:`str`
         The first color hex code.
-    color_two: :class:`str
+    color_two: :class:`str`
         The second color hex code.
-    thumbnail_image: Optional[:class:`UCube.models.Image`]
+    thumbnail_image: Optional[:class:`Image`]
         The thumbnail Image for the Club.
-    small_thumbnail_image: Optional[:class:`UCube.models.Image`]
+    small_thumbnail_image: Optional[:class:`Image`]
         The smaller version of the thumbnail Image for the Club.
     external_url: :class:`str`
         Any external url to the Club.
     registered_time: :class:`str`
         The datetime for when the club was first registered.
-    boards: Dict[str, :class:`models.Board`]
+    boards: Dict[:class:`str`, :class:`Board`]
         A Dict of Boards that belong to the Club with the slug as the key.
-    notifications: List[:class`models.Notification`]
+    notifications: List[:class:`Notification`]
         A list of Notifications that belong to the Club.
 
     """

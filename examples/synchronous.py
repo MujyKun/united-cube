@@ -17,10 +17,13 @@ then it would be suggested to look at the API Docs at https://ucube.readthedocs.
 or run this file in a debugger.
 In order to get a token: https://ucube.readthedocs.io/en/latest/api.html#get-account-token
 
-In order to set a username and password, Rename .env.example to .env and set UCUBE_USERNAME to the username and 
-UCUBE_PASSWORD to the password.
+In order to set a username and password (RECOMMENDED), Rename .env.example to .env and set UCUBE_USERNAME to 
+the username and UCUBE_PASSWORD to the password.
 
-In order to set a token, Rename .env.example to .env and set UCUBE_AUTH to the token. 
+In order to set a token (NOT RECOMMENDED - will expire quickly), 
+Rename .env.example to .env and set UCUBE_AUTH to the token. 
+
+Before running this file, confirm that you used `pip install -r requirements.txt` in the examples directory.
 
 If you are running in an Asynchronous environment, go take a look at the Asynchronous examples file.
 

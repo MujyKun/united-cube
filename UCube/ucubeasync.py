@@ -132,9 +132,13 @@ class UCubeClientAsync(UCubeClient):
                         if load_comments:
                             post.comments = await self.fetch_post_comments(post.slug)
             self.cache_loaded = True
+            if self.verbose:
+                print("UCube Client Cache is now fully loaded.")
 
             if self._hook:
-                await self.start_loop_for_hook()
+                if self.verbose:
+                    print("UCube Client is now starting to check for new notifications.")
+                await self._start_loop_for_hook()
 
         except Exception as err:
             if self._own_session:
@@ -422,7 +426,7 @@ class UCubeClientAsync(UCubeClient):
                     await self.fetch_post(notification.post_slug)
         return all_new_notifications
 
-    async def start_loop_for_hook(self):
+    async def _start_loop_for_hook(self):
         """
         Start checking for new notifications in a new loop and call the hook with the list of new Notifications
 

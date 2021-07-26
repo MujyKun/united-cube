@@ -13,7 +13,8 @@ class User(BaseModel):
     Inherits from :class:`BaseModel`
 
     .. warning::
-        It is not suggested to create a User manually, but rather through the following method: :class:`UCube.objects.create_user`
+        It is not suggested to create a User manually,
+        but rather through the following method: :class:`UCube.objects.create_user`
 
     ``The information retrieved on a User is directly from the UCube API and altered to fit this class.``
 

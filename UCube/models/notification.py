@@ -36,7 +36,7 @@ class Notification(BaseModel):
     ----------
     body: :class:`str`
         The content of the notification.
-    topic_slug :class:`str`
+    topic_slug: :class:`str`
         The slug of the topic.
     channel_type: :class:`str`
         The channel type of the Notification.

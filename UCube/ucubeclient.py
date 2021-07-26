@@ -38,8 +38,7 @@ class UCubeClient:
     web_session:
         An aiohttp or requests client session.
     cache_loaded: bool
-        Whether the Internal UCache Cache is fully loaded.
-        This will change for a split moment when grabbing a new post.
+        Whether the Internal UCube Cache is fully loaded.
     clubs: Dict[:class:`str`, :class:`models.Club`]
         A dict of all Clubs in cache with the slug as the key.
     boards: Dict[:class:`str`, :class:`models.Board`]
