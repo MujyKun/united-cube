@@ -342,12 +342,14 @@ class UCubeClient:
         """
         self.__exception_to_raise = exception
 
-    def _check_status(self, status, url, custom_error_messages: Dict[int, str] = None) -> bool:
+    def _check_status(self, status, url, custom_error_messages: Dict[int, str] = None, message="") -> bool:
         """
         Confirm the status of a URL
 
         :param status: Status code of url connection
         :param url: Link that we connected to.
+        :param custom_error_messages: Any specific error messages for certain statuses.
+        :param message: The body message.
         :return: True if the connection was a success.
         :raises: :ref:`invalid_token_exc` if there was an invalid token.
         """
@@ -365,9 +367,11 @@ class UCubeClient:
 
         if status == 200:
             return True
-        elif status == 401:
+        elif status == 401 or "Token Expired" in message:
             self.expired_token = True
-            raise InvalidToken
+            # raise InvalidToken
+            # InvalidToken no longer needs to be raised due to the next check outside of this function
+            # refreshing the login.
         else:
             if not self.verbose:
                 return False

@@ -281,8 +281,8 @@ class UCubeClientAsync(UCubeClient):
         }
         url = self.replace(self._notifications_url, **replace_kwargs)
         async with self.web_session.get(url=url, headers=self._headers) as resp:
-            if self._check_status(resp.status, url):
-                data = await resp.json()
+            data = await resp.json()
+            if self._check_status(resp.status, url, message=data.get("message")):
                 for raw_notification in data.get("items"):
                     notification = create_notification(raw_notification)
                     notifications.append(notification)

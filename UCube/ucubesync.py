@@ -114,6 +114,14 @@ class UCubeClientSync(UCubeClient):
                             post.comments = self.fetch_post_comments(post.slug)
 
             self.cache_loaded = True
+            if self.verbose:
+                print("UCube Client Cache is now fully loaded.")
+
+            if self._hook:
+                if self.verbose:
+                    print("UCube Client is now starting to check for new notifications.")
+                self._start_loop_for_hook()
+
         except Exception as err:
             if self._own_session:
                 self.web_session.close()
@@ -244,7 +252,8 @@ class UCubeClientSync(UCubeClient):
         }
         url = self.replace(self._notifications_url, **replace_kwargs)
         with self.web_session.get(url=url, headers=self._headers) as resp:
-            if self._check_status(resp.status_code, url):
+            data = json.loads(resp.text)
+            if self._check_status(resp.status_code, url, message=data.get("message")):
                 data = json.loads(resp.text)
                 for raw_notification in data.get("items"):
                     notification = create_notification(raw_notification)
