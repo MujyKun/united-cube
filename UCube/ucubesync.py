@@ -146,8 +146,8 @@ class UCubeClientSync(UCubeClient):
             The client's login payload
         """
         with self.web_session.post(url=self._auth_login_url, json=login_payload) as resp:
-            if self._check_status(resp.status_code, self._auth_login_url):
-                data = json.loads(resp.text)
+            data = json.loads(resp.text)
+            if self._check_status(resp.status_code, self._auth_login_url, message=data.get("message")):
                 refresh_token = data.get("refresh_token")
                 token = data.get("token")
                 if refresh_token:
@@ -429,9 +429,9 @@ class UCubeClientSync(UCubeClient):
         Refresh a token while logged in.
         """
         payload = {"refresh_token": self._get_refresh_token()}
-        with self.web_session.post(url=self._auth_login_url, json=payload) as resp:
-            if self._check_status(resp.status_code, self._auth_login_url):
-                data = json.loads(resp.text)
+        with self.web_session.post(url=self._refresh_auth_url, json=payload) as resp:
+            data = json.loads(resp.text)
+            if self._check_status(resp.status_code, self._refresh_auth_url, message=data.get("message")):
                 token = data.get("token")
                 if token:
                     self._set_token(token)

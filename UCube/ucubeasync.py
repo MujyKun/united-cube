@@ -169,8 +169,8 @@ class UCubeClientAsync(UCubeClient):
             The client's login payload
         """
         async with self.web_session.post(url=self._auth_login_url, json=login_payload) as resp:
-            if self._check_status(resp.status, self._auth_login_url):
-                data = await resp.json()
+            data = await resp.json()
+            if self._check_status(resp.status, self._auth_login_url, message=data.get("message")):
                 refresh_token = data.get("refresh_token")
                 token = data.get("token")
                 if refresh_token:
@@ -475,9 +475,9 @@ class UCubeClientAsync(UCubeClient):
 
         """
         payload = {"refresh_token": self._get_refresh_token()}
-        async with self.web_session.post(url=self._auth_login_url, json=payload) as resp:
-            if self._check_status(resp.status, self._auth_login_url):
-                data = await resp.json()
+        async with self.web_session.post(url=self._refresh_auth_url, json=payload) as resp:
+            data = await resp.json()
+            if self._check_status(resp.status, self._refresh_auth_url, message=data.get("message")):
                 token = data.get("token")
                 if token:
                     self._set_token(token)
