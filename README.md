@@ -1,5 +1,8 @@
 ## UCube
 
+| :exclamation:  This project is no longer being maintained. I'm not sure if it still works.  :exclamation:  |
+|-----------------------------------------|
+
 ### What is it?
 UCube creates internal cache for the communities a user follows on [United-Cube](https://www.united-cube.com/).  
 This is a **wrapper** for United-Cube's private API, but may be referred to as an API on this repository.
